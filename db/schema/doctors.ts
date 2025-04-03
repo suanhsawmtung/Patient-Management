@@ -1,7 +1,6 @@
 import { decimal, pgTable, varchar } from "drizzle-orm/pg-core";
 
 import { users } from "./users";
-import { departments } from "./departments";
 import { timestamps } from "../helpers/columns.helpers";
 
 export const doctors = pgTable("doctor", {
@@ -15,6 +14,5 @@ export const doctors = pgTable("doctor", {
         .notNull()
         .unique(),
     consultationFee: decimal("consultation_fee").notNull(),
-    departmentId: varchar("department_id").references(() => departments.id),
     ...timestamps,
 });

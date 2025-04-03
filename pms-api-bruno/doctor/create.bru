@@ -1,0 +1,29 @@
+meta {
+  name: create
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{api_url}}/doctors
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john121113.doe@example.com",
+    "gender": "male",
+    "phone": "1234567890",
+    "specialty": "Cardiology",
+    "degree": "MD",
+    "contactNumber": "9876543210",
+    "licenseNumber": "ME11Ddd11112345",
+    "consultationFee": 150,
+    "dpeartmentIds": [
+      "d480903f-c05b-497c-9114-27b9c7e027eb"
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-import { pgTable, varchar, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, varchar, pgEnum } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { timestamps } from "../helpers/columns.helpers";
 import { generateUniqueString } from "../helpers/slug.helpers";
