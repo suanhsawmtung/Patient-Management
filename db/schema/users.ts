@@ -11,17 +11,20 @@ export const roleEnum = pgEnum("role", [
     "receptionist",
 ]);
 
+export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
+
 export const users = pgTable("user", {
     id: varchar("id", { length: 255 })
         .primaryKey()
         .default(sql`gen_random_uuid()`),
     email: varchar("email", { length: 255 }).notNull().unique(),
+    slug: varchar().$default(() => generateUniqueString(16)),
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
     firstName: varchar("first_name", { length: 255 }).notNull(),
     lastName: varchar("last_name", { length: 255 }).notNull(),
-    slug: varchar().$default(() => generateUniqueString(16)),
     phone: varchar("phone", { length: 20 }),
     role: roleEnum("role").notNull(),
+    gender: genderEnum("gender").notNull(),
     image: varchar("image"),
     ...timestamps,
 });

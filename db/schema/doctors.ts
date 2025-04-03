@@ -9,6 +9,8 @@ export const doctors = pgTable("doctor", {
         .primaryKey()
         .references(() => users.id),
     specialty: varchar("specialty", { length: 255 }).notNull(),
+    degree: varchar("degree", { length: 255 }).notNull(),
+    contactNumber: varchar("contact_number", { length: 255 }).notNull(),
     licenseNumber: varchar("license_number", { length: 255 })
         .notNull()
         .unique(),

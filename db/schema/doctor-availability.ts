@@ -1,6 +1,13 @@
-import { integer, pgTable, primaryKey, varchar } from "drizzle-orm/pg-core";
+import {
+    boolean,
+    integer,
+    pgTable,
+    primaryKey,
+    varchar,
+} from "drizzle-orm/pg-core";
 
 import { doctors } from "./doctors";
+import { timestamps } from "../helpers/columns.helpers";
 
 export const doctorAvailability = pgTable(
     "doctor_availability",
@@ -8,9 +15,11 @@ export const doctorAvailability = pgTable(
         doctorId: varchar("doctor_id")
             .references(() => doctors.userId)
             .notNull(),
-        dayOfWeek: integer("day_of_week").notNull(), // 0 (Sunday) to 6 (Saturday)
-        startTime: varchar("start_time", { length: 5 }).notNull(), // HH:MM format
+        dayOfWeek: integer("day_of_week").notNull(),
+        startTime: varchar("start_time", { length: 5 }).notNull(),
         endTime: varchar("end_time", { length: 5 }).notNull(),
+        isAvailable: boolean("is_available").default(true),
+        ...timestamps,
     },
     (table) => ({
         pk: primaryKey({ columns: [table.doctorId, table.dayOfWeek] }),
