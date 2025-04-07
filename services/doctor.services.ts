@@ -1,6 +1,7 @@
 import { doctors } from "@/data/doctor.data";
 import { db } from "@/db/drizzle";
 import {
+    departmentsTable,
     doctorAvailabilityTable,
     doctorDepartmentsTable,
     doctorsTable,
@@ -8,13 +9,15 @@ import {
 } from "@/db/schemas";
 import { hashOfPassword } from "@/lib/password.lib";
 import {
+    Department,
     DoctorFormSchemaType,
     DoctorPayload,
-    DoctorType,
+    DoctorT,
 } from "@/types/doctor.types";
 import { NewUserT } from "@/types/users.types";
+import { eq } from "drizzle-orm";
 
-export const getAllDoctors = async (): Promise<DoctorType[]> => {
+export const getAllDoctors = async () => {
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve(doctors);
@@ -22,12 +25,71 @@ export const getAllDoctors = async (): Promise<DoctorType[]> => {
     });
 };
 
-export const getDoctor = async (id: string): Promise<DoctorType> => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(doctors.filter((doctor) => doctor.id === id)[0]);
-        }, 1500);
-    });
+export const getDoctor = async (
+    slug: string
+): Promise<{
+    data: DoctorT | null;
+    error: { message?: string; status?: number } | null;
+}> => {
+    const error: { message?: string; status?: number } = {};
+
+    const doctorResult = await db
+        .select({
+            user: {
+                id: usersTable.id,
+                firstName: usersTable.firstName,
+                lastName: usersTable.lastName,
+                slug: usersTable.slug,
+                email: usersTable.email,
+                phone: usersTable.phone,
+                role: usersTable.role,
+                gender: usersTable.gender,
+                createdAt: usersTable.created_at,
+            },
+            doctor: {
+                userId: doctorsTable.userId,
+                specialty: doctorsTable.specialty,
+                degree: doctorsTable.degree,
+                contactNumber: doctorsTable.contactNumber,
+                licenseNumber: doctorsTable.licenseNumber,
+                consultationFee: doctorsTable.consultationFee,
+            },
+        })
+        .from(usersTable)
+        .where(eq(usersTable.slug, slug))
+        .innerJoin(doctorsTable, eq(doctorsTable.userId, usersTable.id))
+        .then((d) => d[0] || null);
+
+    if (!doctorResult) {
+        error["message"] = "Doctor not found";
+        error["status"] = 404;
+
+        return {
+            data: null,
+            error,
+        };
+    }
+
+    const departments = await getDepartmentsByDoctor(
+        doctorResult.doctor.userId
+    );
+
+    const availability = await getDoctorAvailability(
+        doctorResult.doctor.userId
+    );
+
+    const userWithDoctor = {
+        ...doctorResult.user,
+        ...doctorResult.doctor,
+        departments,
+        availability,
+    };
+
+    return {
+        // @ts-expect-error @ts-ignore
+        data: userWithDoctor,
+        error: null,
+    };
 };
 
 export const createDoctor = async (entity: DoctorPayload) => {
@@ -150,4 +212,36 @@ export const deleteDoctor = async (id: string) => {
             resolve(deletedDoctor); // Return the deleted doctor object
         }, 1500);
     });
+};
+
+export const getDepartmentsByDoctor = async (
+    doctorId: string
+): Promise<Department[]> => {
+    // @ts-expect-error @ts-ignore
+    return db
+        .select({
+            id: departmentsTable.id,
+            name: departmentsTable.name,
+            slug: departmentsTable.slug,
+            description: departmentsTable.description,
+        })
+        .from(doctorDepartmentsTable)
+        .innerJoin(
+            departmentsTable,
+            eq(departmentsTable.id, doctorDepartmentsTable.departmentId)
+        )
+        .where(eq(doctorDepartmentsTable.doctorId, doctorId));
+};
+
+export const getDoctorAvailability = async (doctorId: string) => {
+    return db
+        .select({
+            doctorId: doctorAvailabilityTable.doctorId,
+            dayOfWeek: doctorAvailabilityTable.dayOfWeek,
+            startTime: doctorAvailabilityTable.startTime,
+            endTime: doctorAvailabilityTable.endTime,
+            isAvailable: doctorAvailabilityTable.isAvailable,
+        })
+        .from(doctorAvailabilityTable)
+        .where(eq(doctorAvailabilityTable.doctorId, doctorId));
 };
