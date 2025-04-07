@@ -12,7 +12,10 @@
     "lint": "next lint",
     "db:push": "npx drizzle-kit push",
     "db:generate": "npx drizzle-kit generate",
-    "db:migrate": "npx drizzle-kit migrate"
+    "db:migrate": "npx drizzle-kit migrate",
+    "db:studio": "npx drizzle-kit studio",
+    "db:reset": "npx drizzle-kit reset",
+    "db:drop": "npx drizzle-kit drop"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

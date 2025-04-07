@@ -1,6 +1,11 @@
 import { doctors } from "@/data/doctor.data";
 import { db } from "@/db/drizzle";
-import { doctorDepartmentsTable, doctorsTable, usersTable } from "@/db/schemas";
+import {
+    doctorAvailabilityTable,
+    doctorDepartmentsTable,
+    doctorsTable,
+    usersTable,
+} from "@/db/schemas";
 import { hashOfPassword } from "@/lib/password.lib";
 import {
     DoctorFormSchemaType,
@@ -75,10 +80,34 @@ export const createDoctor = async (entity: DoctorPayload) => {
                 departmentId,
             })
         );
+        const departments = await db
+            .insert(doctorDepartmentsTable)
+            .values(doctorDepartmentValues);
 
-        await db.insert(doctorDepartmentsTable).values(doctorDepartmentValues);
+        const doctorAvailabilityValues = entity.doctorAvailability.map(
+            (availability) => ({
+                doctorId: doctor.userId,
+                dayOfWeek: availability.dayOfWeek,
+                startTime: availability.startTime,
+                endTime: availability.endTime,
+                isAvailable: availability.isAvailable || true,
+            })
+        );
+        const availability = await db
+            .insert(doctorAvailabilityTable)
+            .values(doctorAvailabilityValues);
 
-        return { success: true, data: { ...user, doctor } };
+        return {
+            success: true,
+            data: {
+                ...user,
+                doctor: {
+                    ...doctor,
+                    departments,
+                    availability,
+                },
+            },
+        };
     } catch (error) {
         console.error("Error creating doctor:", error);
         return {

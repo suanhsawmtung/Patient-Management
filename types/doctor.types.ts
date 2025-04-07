@@ -24,6 +24,13 @@ export interface DoctorType {
     updated_at: string;
 }
 
+export interface DoctorAvailabilityType {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    isAvailable: boolean;
+}
+
 export interface DoctorPayload {
     firstName: string;
     lastName: string;
@@ -38,4 +45,5 @@ export interface DoctorPayload {
     consultationFee: string;
 
     dpeartmentIds: string[];
+    doctorAvailability: DoctorAvailabilityType[];
 }

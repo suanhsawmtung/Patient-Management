@@ -16,8 +16,8 @@ export const doctorAvailability = pgTable(
             .references(() => doctors.userId)
             .notNull(),
         dayOfWeek: integer("day_of_week").notNull(),
-        startTime: varchar("start_time", { length: 5 }).notNull(),
-        endTime: varchar("end_time", { length: 5 }).notNull(),
+        startTime: varchar("start_time", { length: 255 }).notNull(),
+        endTime: varchar("end_time", { length: 255 }).notNull(),
         isAvailable: boolean("is_available").default(true),
         ...timestamps,
     },
