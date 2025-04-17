@@ -5,8 +5,9 @@ import { DoctorPayload } from "@/types/doctor.types";
 import { validateDoctorData } from "@/validations/doctor.validations";
 import { NextRequest } from "next/server";
 
-// get all
 /**
+ * Get All
+ *
  * @param request
  * @returns {Promise<Doctor[]>} - A list of doctors.
  *
@@ -57,7 +58,26 @@ export const GET = async (request: NextRequest) => {
     }
 };
 
-// create
+/**
+ * Create
+ *
+ * @param {Request} req - The incoming HTTP request.
+ * @returns {Promise<Response>} - The server response.
+ *
+ * @typedef {Object} DoctorPayload
+ * @property {string} firstName
+ * @property {string} lastName
+ * @property {string} email
+ * @property {string} phone
+ * @property {string} gender
+ * @property {string} contactNumber
+ * @property {string} specialty
+ * @property {string} degree
+ * @property {string} licenseNumber
+ * @property {string} consultationFee
+ * @property {string[]} dpeartmentIds
+ * @property {Availability[]} doctorAvailability
+ */
 export const POST = async (req: Request) => {
     try {
         const entity: DoctorPayload = await req.json();

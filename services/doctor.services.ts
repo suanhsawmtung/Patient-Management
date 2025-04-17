@@ -1,5 +1,6 @@
 import { doctors } from "@/data/doctor.data";
 import { db } from "@/db/drizzle";
+import { getArrayDifferences } from "@/db/helpers/array.helpers";
 import { GenderEnum } from "@/db/schema/users";
 import {
     departmentsTable,
@@ -9,12 +10,7 @@ import {
     usersTable,
 } from "@/db/schemas";
 import { hashOfPassword } from "@/lib/password.lib";
-import {
-    Department,
-    DoctorFormSchemaType,
-    DoctorPayload,
-    DoctorT,
-} from "@/types/doctor.types";
+import { Department, DoctorPayload, DoctorT } from "@/types/doctor.types";
 import { NewUserT } from "@/types/users.types";
 import { and, desc, eq, ilike, SQL } from "drizzle-orm";
 
@@ -225,22 +221,145 @@ export const createDoctor = async (entity: DoctorPayload) => {
 };
 
 export const updateDoctor = async (
-    id: string,
-    updateData: DoctorFormSchemaType
+    userWithDoctor: DoctorT,
+    updateData: DoctorPayload
 ) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const indx = doctors.findIndex((doctor) => doctor.id === id);
+    // User
+    const updatedUser = db
+        .update(usersTable)
+        .set({
+            firstName: updateData.firstName,
+            lastName: updateData.lastName,
+            email: updateData.email,
+            phone: updateData.phone,
+            gender: updateData.gender as GenderEnum,
+        })
+        .where(eq(usersTable.id, userWithDoctor.id))
+        .returning({
+            id: usersTable.id,
+            email: usersTable.email,
+            firstName: usersTable.firstName,
+            lastName: usersTable.lastName,
+            phone: usersTable.phone,
+            gender: usersTable.gender,
+        })
+        .then((res) => res[0]);
 
-            if (indx === -1) {
-                reject(new Error("Doctor not found"));
-                return;
-            }
+    // Doctor
+    const updatedDoctor = await db
+        .update(doctorsTable)
+        .set({
+            specialty: updateData.specialty,
+            degree: updateData.degree,
+            contactNumber: updateData.contactNumber,
+            licenseNumber: updateData.licenseNumber,
+            consultationFee: updateData.consultationFee,
+        })
+        .where(eq(doctorsTable.userId, userWithDoctor.id))
+        .returning({
+            userId: doctorsTable.userId,
+            specialty: doctorsTable.specialty,
+            degree: doctorsTable.degree,
+            contactNumber: doctorsTable.contactNumber,
+            licenseNumber: doctorsTable.licenseNumber,
+            consultationFee: doctorsTable.consultationFee,
+        })
+        .then((res) => res[0]);
 
-            doctors[indx] = { ...doctors[indx], ...updateData };
-            resolve({ ...doctors[indx], ...updateData });
-        }, 1500);
-    });
+    // Departments
+    const existingDepartmentsIds = await db
+        .select()
+        .from(doctorDepartmentsTable)
+        .where(eq(doctorDepartmentsTable.doctorId, userWithDoctor.id))
+        .then((res) => {
+            return res.map((d) => d.departmentId);
+        });
+    const newDepartmentsIds = updateData.dpeartmentIds;
+    const { newItems, removedItems } = getArrayDifferences(
+        existingDepartmentsIds,
+        newDepartmentsIds
+    );
+    Promise.all(
+        removedItems.map((removeItem) => {
+            return db
+                .delete(doctorDepartmentsTable)
+                .where(
+                    and(
+                        eq(doctorDepartmentsTable.departmentId, removeItem),
+                        eq(doctorDepartmentsTable.doctorId, userWithDoctor.id)
+                    )
+                );
+        })
+    );
+    await Promise.all(
+        newItems.map((newItem) => {
+            return db
+                .insert(doctorDepartmentsTable)
+                .values({
+                    doctorId: userWithDoctor.id,
+                    departmentId: newItem,
+                })
+                .returning({
+                    doctorId: doctorDepartmentsTable.doctorId,
+                    departmentId: doctorDepartmentsTable.departmentId,
+                });
+        })
+    );
+
+    // Doctor Availability
+    const existingDoctorAvailability = await db
+        .select()
+        .from(doctorAvailabilityTable)
+        .where(eq(doctorAvailabilityTable.doctorId, userWithDoctor.id))
+        .then((res) => {
+            return res.map((a) => a.dayOfWeek);
+        });
+    const newDoctorAvailability = updateData.doctorAvailability.map(
+        (a) => a.dayOfWeek
+    );
+    const { newItems: newAvailabilities, removedItems: oldAvailabilities } =
+        getArrayDifferences(existingDoctorAvailability, newDoctorAvailability);
+    Promise.all(
+        oldAvailabilities.map((_removeItem) => {
+            return db
+                .delete(doctorAvailabilityTable)
+                .where(
+                    and(
+                        eq(doctorAvailabilityTable.dayOfWeek, _removeItem),
+                        eq(doctorAvailabilityTable.doctorId, userWithDoctor.id)
+                    )
+                );
+        })
+    );
+    await Promise.all(
+        newAvailabilities.map((_newItem) => {
+            const availability = updateData.doctorAvailability.filter(
+                (n) => n.dayOfWeek === _newItem
+            )[0];
+
+            return db
+                .insert(doctorAvailabilityTable)
+                .values({
+                    doctorId: userWithDoctor.id,
+                    dayOfWeek: _newItem,
+                    startTime: availability.startTime,
+                    endTime: availability.endTime,
+                    isAvailable: availability.isAvailable,
+                })
+                .returning({
+                    doctorId: doctorAvailabilityTable.doctorId,
+                    dayOfWeek: doctorAvailabilityTable.dayOfWeek,
+                    startTime: doctorAvailabilityTable.startTime,
+                    endTime: doctorAvailabilityTable.endTime,
+                    isAvailable: doctorAvailabilityTable.isAvailable,
+                });
+        })
+    );
+
+    return {
+        ...updatedUser,
+        ...updatedDoctor,
+    };
 };
 
 export const deleteDoctor = async (id: string) => {
