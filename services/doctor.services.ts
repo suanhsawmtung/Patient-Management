@@ -41,18 +41,6 @@ export const getAllDoctors = async (
         );
     }
 
-    const allowedGenderParams: GenderEnum[] = ["male", "female"];
-    if (gender && !allowedGenderParams.includes(gender)) {
-        return Response.json(
-            {
-                success: false,
-                message: "Invalid gender parameter",
-                error: "Invalid gender parameter",
-            },
-            { status: 400 }
-        );
-    }
-
     if (gender) filters.push(eq(usersTable.gender, gender));
 
     return db

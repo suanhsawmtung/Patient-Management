@@ -5,11 +5,12 @@ meta {
 }
 
 get {
-  url: {{api_url}}/doctors?pageSize=1
+  url: {{api_url}}/doctors?pageSize=1&pageIndex=3
   body: none
   auth: inherit
 }
 
 params:query {
   pageSize: 1
+  pageIndex: 3
 }
