@@ -13,6 +13,8 @@ export const roleEnum = pgEnum("role", [
 
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 
+export type GenderEnum = "male" | "female" | "other";
+
 export const users = pgTable("user", {
     id: varchar("id", { length: 255 })
         .primaryKey()

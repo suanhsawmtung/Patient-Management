@@ -1,5 +1,6 @@
 import { doctors } from "@/data/doctor.data";
 import { db } from "@/db/drizzle";
+import { GenderEnum } from "@/db/schema/users";
 import {
     departmentsTable,
     doctorAvailabilityTable,
@@ -15,14 +16,70 @@ import {
     DoctorT,
 } from "@/types/doctor.types";
 import { NewUserT } from "@/types/users.types";
-import { eq } from "drizzle-orm";
+import { and, desc, eq, ilike, SQL } from "drizzle-orm";
 
-export const getAllDoctors = async () => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(doctors);
-        }, 1500);
-    });
+export const getAllDoctors = async (
+    query: string,
+    gender: GenderEnum,
+    pageSize: number,
+    pageIndex: number
+) => {
+    const limit = pageSize;
+    const offset = (pageIndex - 1) * pageSize;
+
+    const filters: SQL[] = [eq(usersTable.role, "doctor")];
+
+    if (query) {
+        const keyword = `%${query.trim()}%`;
+        filters.push(
+            // @ts-expect-error @ts-ignore
+            or(
+                ilike(usersTable.email, keyword),
+                ilike(usersTable.firstName, keyword),
+                ilike(usersTable.lastName, keyword)
+            )
+        );
+    }
+
+    const allowedGenderParams: GenderEnum[] = ["male", "female"];
+    if (gender && !allowedGenderParams.includes(gender)) {
+        return Response.json(
+            {
+                success: false,
+                message: "Invalid gender parameter",
+                error: "Invalid gender parameter",
+            },
+            { status: 400 }
+        );
+    }
+
+    if (gender) filters.push(eq(usersTable.gender, gender));
+
+    return db
+        .select()
+        .from(usersTable)
+        .where(and(...filters))
+        .innerJoin(doctorsTable, eq(doctorsTable.userId, usersTable.id))
+        .orderBy(desc(usersTable.created_at))
+        .limit(limit)
+        .offset(offset)
+        .then((res) => {
+            return res.map((u) => ({
+                id: u.user.id,
+                firstName: u.user.firstName,
+                lastName: u.user.lastName,
+                slug: u.user.slug,
+                email: u.user.email,
+                phone: u.user.phone,
+                gender: u.user.gender,
+                role: u.user.role,
+                specialty: u.doctor.specialty,
+                degree: u.doctor.degree,
+                contactNumber: u.doctor.contactNumber,
+                licenseNumber: u.doctor.licenseNumber,
+                consultationFee: u.doctor.consultationFee,
+            }));
+        });
 };
 
 export const getDoctor = async (

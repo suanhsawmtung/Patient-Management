@@ -1,10 +1,48 @@
-import { createDoctor } from "@/services/doctor.services";
+import { GenderEnum } from "@/db/schema/users";
+import { createDoctor, getAllDoctors } from "@/services/doctor.services";
+import { catchError } from "@/services/error.services";
 import { DoctorPayload } from "@/types/doctor.types";
 import { validateDoctorData } from "@/validations/doctor.validations";
+import { NextRequest } from "next/server";
 
 // get all
-export const GET = async () => {
-    // Implementation for GET
+/**
+ * @param request
+ * @returns {Promise<Doctor[]>} - A list of doctors.
+ *
+ * @property {string} [query] - Search keyword for name/email.
+ * @property {'male' | 'female'} [gender] - Gender filter.
+ * @property {number} [pageSize] - Number of results per page.
+ * @property {number} [pageIndex] - Page number (zero-based).
+ */
+export const GET = async (request: NextRequest) => {
+    try {
+        const searchParams = request.nextUrl.searchParams;
+        const query = searchParams.get("query");
+        const gender = searchParams.get("gender") as GenderEnum;
+        const pageSize = Number(searchParams.get("pageSize") ?? 10);
+        const pageIndex = Number(searchParams.get("pageIndex") ?? 1);
+
+        const data = await getAllDoctors(
+            query as string,
+            gender,
+            pageSize,
+            pageIndex
+        );
+
+        return Response.json(
+            {
+                message: "Successfully fetched data",
+                success: true,
+                data,
+            },
+            {
+                status: 200,
+            }
+        );
+    } catch (error) {
+        return catchError(error);
+    }
 };
 
 // create
@@ -46,14 +84,6 @@ export const POST = async (req: Request) => {
             data: result.data,
         });
     } catch (error) {
-        console.error("Unexpected error:", error);
-        return Response.json(
-            {
-                success: false,
-                message: "An unexpected error occurred",
-                error: error instanceof Error ? error.message : "Unknown error",
-            },
-            { status: 500 }
-        );
+        return catchError(error);
     }
 };
