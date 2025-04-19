@@ -1,25 +1,56 @@
 import { DoctorFormSchema } from "@/validations/doctor.validations";
 import { z } from "zod";
 
-export type DoctorFormSchemaType = z.infer<typeof DoctorFormSchema>
+export type DoctorFormSchemaType = z.infer<typeof DoctorFormSchema>;
 
-export interface DoctorType {
+export interface Department {
     id: string;
-    title: string;
+    name: string;
+    slug: string;
+    description: string;
+}
+
+export interface Availability {
+    doctorId: string;
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    isAvailable: boolean;
+}
+
+export interface DoctorT {
+    id: string;
     firstName: string;
     lastName: string;
-    department: string;
-    contact_no: string;
+    slug: string;
     email: string;
+    phone: string;
+    role: "doctor";
+    gender: "male" | "female" | "other";
+    createdAt: string; // ISO date string
+    userId: string;
+    specialty: string;
     degree: string;
-    pending_appointment: number;
-    complete_appointment: number;
-    fees: string,
-    experience: string,
-    available_days: string[],
-    slots_time: string,
-    available_time_from: string,
-    available_time_to: string
-    created_at: string;
-    updated_at: string;
+    contactNumber: string;
+    licenseNumber: string;
+    consultationFee: string;
+    departments: Department[];
+    availability: Availability[];
+}
+
+export interface DoctorPayload {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    gender: string;
+
+    contactNumber: string;
+    specialty: string;
+    degree: string;
+    licenseNumber: string;
+    consultationFee: string;
+
+    dpeartmentIds: string[];
+    doctorAvailability: Availability[];
 }

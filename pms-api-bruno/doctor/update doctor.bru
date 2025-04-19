@@ -1,0 +1,49 @@
+meta {
+  name: update doctor
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{api_url}}/doctors/YUiQti6jnDQuXKmn
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "firstName": "John Updated",
+    "lastName": "Doe Updated",
+    "email": "ak1updatedupdatedak1updatedupdated@demo.com",
+    "gender": "male",
+    "phone": "123456789023322322232123456789023322322232",
+    "specialty": "Cardiology",
+    "degree": "MD",
+    "contactNumber": "9876232543210112323232323298762325432101123232323232",
+    "licenseNumber": "ak123456updatedak123456updatedak123456updatedak123456updated",
+    "consultationFee": 150,
+    "dpeartmentIds": [
+      "e4bd9bc9-eaa2-48f2-9eff-6fee7558bcbd"
+    ],
+    "doctorAvailability": [
+      {
+        "dayOfWeek": 4,
+        "startTime": "2025-04-07T11:00:00.992Z",
+        "endTime": "2025-04-07T01:00:00.992Z",
+        "isAvailable": true
+      },
+      {
+        "dayOfWeek": 5,
+        "startTime": "2025-04-07T11:00:00.992Z",
+        "endTime": "2025-04-07T01:00:00.992Z",
+        "isAvailable": true
+      },
+      {
+        "dayOfWeek": 6,
+        "startTime": "2025-04-07T11:00:00.992Z",
+        "endTime": "2025-04-07T01:00:00.992Z",
+        "isAvailable": true
+      }
+    ]
+  }
+}
